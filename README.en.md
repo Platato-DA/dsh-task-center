@@ -1,11 +1,11 @@
 # DSH Task Center
 
-[![CI](https://github.com/pallwalt/dsh-task-center/actions/workflows/ci.yml/badge.svg)](https://github.com/pallwalt/dsh-task-center/actions/workflows/ci.yml)
+[![CI](https://github.com/Platato-DA/dsh-task-center/actions/workflows/ci.yml/badge.svg)](https://github.com/Platato-DA/dsh-task-center/actions/workflows/ci.yml)
 [![License: BSD-3-Clause](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
 
 **Scheduled Agent execution, run history, and file artifacts inside DeepSeek Harness.**
 
-[中文](README.md) · [Releases](https://github.com/pallwalt/dsh-task-center/releases) · [Usage](docs/USAGE.md) · [Compatibility](docs/COMPATIBILITY.md)
+[中文](README.md) · [Releases](https://github.com/Platato-DA/dsh-task-center/releases) · [Usage](docs/USAGE.md) · [Compatibility](docs/COMPATIBILITY.md)
 
 An independent community plugin for **DeepSeek Harness 0.2.1-rc.5**. Version
 **0.1.0-beta.2** is the current public beta. The UI currently uses Simplified Chinese.
@@ -37,7 +37,7 @@ installing. See the [official Desktop command guide](https://github.com/deepseek
 if `dsh` is unavailable in your terminal.
 
 Download `dsh-external-dsh-task-center-0.1.0-beta.2.tgz` from
-[Releases](https://github.com/pallwalt/dsh-task-center/releases), then run from its
+[Releases](https://github.com/Platato-DA/dsh-task-center/releases), then run from its
 download directory:
 
 ```sh
@@ -51,7 +51,7 @@ provided with the release. A pinned GitHub install is also available; `lib/` is
 committed, so installation does not need a build script:
 
 ```sh
-dsh plugin --profile desktop add 'github:pallwalt/dsh-task-center#v0.1.0-beta.2'
+dsh plugin --profile desktop add 'github:Platato-DA/dsh-task-center#v0.1.0-beta.2'
 ```
 
 Other DSH versions have not been accepted. Do not bypass the host compatibility
@@ -96,7 +96,7 @@ DSH's native `schedule_create` creates a conversation reminder.
 Use Node.js **22+** and pnpm **9.15.9**:
 
 ```sh
-git clone https://github.com/pallwalt/dsh-task-center.git
+git clone https://github.com/Platato-DA/dsh-task-center.git
 cd dsh-task-center
 corepack enable
 pnpm install --frozen-lockfile
@@ -118,7 +118,7 @@ provider acceptance.
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md), [architecture](docs/ARCHITECTURE.md),
 and [SECURITY.md](SECURITY.md). Report ordinary problems in
-[Issues](https://github.com/pallwalt/dsh-task-center/issues), with private data
+[Issues](https://github.com/Platato-DA/dsh-task-center/issues), with private data
 removed. Report vulnerabilities privately.
 
 Licensed under [BSD-3-Clause](LICENSE), matching the existing package declaration.

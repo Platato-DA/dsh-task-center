@@ -18,10 +18,10 @@
   "author": "pallwalt",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pallwalt/dsh-task-center.git"
+    "url": "git+https://github.com/Platato-DA/dsh-task-center.git"
   },
-  "homepage": "https://github.com/pallwalt/dsh-task-center#readme",
-  "bugs": { "url": "https://github.com/pallwalt/dsh-task-center/issues" },
+  "homepage": "https://github.com/Platato-DA/dsh-task-center#readme",
+  "bugs": { "url": "https://github.com/Platato-DA/dsh-task-center/issues" },
   "keywords": ["dsh-plugin", "deepseek-harness", "scheduler", "automation", "agent"],
   "packageManager": "pnpm@9.15.9",
   "engines": {

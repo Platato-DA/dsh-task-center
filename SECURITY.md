@@ -8,7 +8,7 @@ guarantee is claimed.
 
 ## Report a vulnerability
 
-Please use [GitHub private vulnerability reporting](https://github.com/pallwalt/dsh-task-center/security/advisories/new).
+Please use [GitHub private vulnerability reporting](https://github.com/Platato-DA/dsh-task-center/security/advisories/new).
 Include a minimal reproduction, affected version, impact, and proposed fix if
 available. Do not include actual API keys, cookies, task databases, or personal
 documents. Do not open an issue with an exploitable proof of concept before

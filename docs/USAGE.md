@@ -14,7 +14,7 @@ dsh plugin --profile desktop add ./dsh-external-dsh-task-center-0.1.0-beta.2.tgz
 也可以安装带预构建产物的固定标签：
 
 ```sh
-dsh plugin --profile desktop add 'github:pallwalt/dsh-task-center#v0.1.0-beta.2'
+dsh plugin --profile desktop add 'github:Platato-DA/dsh-task-center#v0.1.0-beta.2'
 ```
 
 开发者可克隆后构建，再通过绝对路径安装本地目录：

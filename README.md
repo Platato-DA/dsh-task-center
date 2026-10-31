@@ -1,13 +1,13 @@
 # DSH Task Center · 自动化任务中心
 
-[![CI](https://github.com/pallwalt/dsh-task-center/actions/workflows/ci.yml/badge.svg)](https://github.com/pallwalt/dsh-task-center/actions/workflows/ci.yml)
+[![CI](https://github.com/Platato-DA/dsh-task-center/actions/workflows/ci.yml/badge.svg)](https://github.com/Platato-DA/dsh-task-center/actions/workflows/ci.yml)
 [![License: BSD-3-Clause](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
 [![DSH 0.2.1-rc.5](https://img.shields.io/badge/DSH-0.2.1--rc.5-333333)](docs/COMPATIBILITY.md)
-[![Public beta](https://img.shields.io/badge/status-public%20beta-orange.svg)](https://github.com/pallwalt/dsh-task-center/releases)
+[![Public beta](https://img.shields.io/badge/status-public%20beta-orange.svg)](https://github.com/Platato-DA/dsh-task-center/releases)
 
 **在 DeepSeek Harness 里定时执行 Agent 任务，留下运行记录和真实文件产物。**
 
-[English](README.en.md) · [安装与使用](docs/USAGE.md) · [兼容性与限制](docs/COMPATIBILITY.md) · [发布检查](docs/RELEASE-READINESS.md) · [Release 下载](https://github.com/pallwalt/dsh-task-center/releases)
+[English](README.en.md) · [安装与使用](docs/USAGE.md) · [兼容性与限制](docs/COMPATIBILITY.md) · [发布检查](docs/RELEASE-READINESS.md) · [Release 下载](https://github.com/Platato-DA/dsh-task-center/releases)
 
 这是独立的社区插件，适配 **DeepSeek Harness 0.2.1-rc.5**。当前版本为 **0.1.0-beta.2**，欢迎试用和反馈；目前的界面语言是简体中文。
 
@@ -33,7 +33,7 @@
 
 需要已经初始化的 DSH Desktop **0.2.1-rc.5**，以及该版本配套的 `dsh` 终端命令。先启动 Desktop 一次完成初始化，安装前**完全退出应用**。终端命令的设置见 [DSH 官方 Desktop 文档](https://github.com/deepseek-ai/deepseek-harness/blob/master/apps/desktop/README.md#terminal-command)。
 
-从 [Releases](https://github.com/pallwalt/dsh-task-center/releases) 下载 `dsh-external-dsh-task-center-0.1.0-beta.2.tgz`，在下载目录执行：
+从 [Releases](https://github.com/Platato-DA/dsh-task-center/releases) 下载 `dsh-external-dsh-task-center-0.1.0-beta.2.tgz`，在下载目录执行：
 
 ```sh
 dsh --version
@@ -46,7 +46,7 @@ dsh plugin --profile desktop add ./dsh-external-dsh-task-center-0.1.0-beta.2.tgz
 也可以安装固定的 GitHub 标签（仓库已包含 `lib/`，无需安装时编译）：
 
 ```sh
-dsh plugin --profile desktop add 'github:pallwalt/dsh-task-center#v0.1.0-beta.2'
+dsh plugin --profile desktop add 'github:Platato-DA/dsh-task-center#v0.1.0-beta.2'
 ```
 
 安装与升级会经过 DSH 自身的版本检查。其他 DSH 版本目前不在支持范围；不要通过修改版本约束来绕过检查。更多方式、故障排查、升级和卸载见 [使用指南](docs/USAGE.md)。本项目目前通过 GitHub 分发，尚未发布到 npm。
@@ -88,7 +88,7 @@ dsh plugin --profile desktop add 'github:pallwalt/dsh-task-center#v0.1.0-beta.2'
 开发环境：Node.js **22+**、pnpm **9.15.9**。
 
 ```sh
-git clone https://github.com/pallwalt/dsh-task-center.git
+git clone https://github.com/Platato-DA/dsh-task-center.git
 cd dsh-task-center
 corepack enable
 pnpm install --frozen-lockfile
@@ -104,6 +104,6 @@ pnpm check:package
 
 ## 反馈与许可
 
-普通问题和建议请提交 [Issues](https://github.com/pallwalt/dsh-task-center/issues)。报告前移除密钥、个人目录、任务数据库和完整会话；安全漏洞请按 [安全政策](SECURITY.md) 私下反馈。
+普通问题和建议请提交 [Issues](https://github.com/Platato-DA/dsh-task-center/issues)。报告前移除密钥、个人目录、任务数据库和完整会话；安全漏洞请按 [安全政策](SECURITY.md) 私下反馈。
 
 本项目沿用现有包声明的 **BSD-3-Clause** 许可证，正文见 [LICENSE](LICENSE)。第三方依赖与产品名称说明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。

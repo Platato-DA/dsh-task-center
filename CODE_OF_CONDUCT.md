@@ -13,5 +13,5 @@ English are both welcome.
 Maintainers may edit or remove harmful content, close discussions, or limit
 participation. If a public report would expose private information, contact the
 maintainer through the contact options they publish on their
-[GitHub profile](https://github.com/pallwalt). Security vulnerabilities should
+[GitHub profile](https://github.com/Platato-DA). Security vulnerabilities should
 follow [SECURITY.md](SECURITY.md).
