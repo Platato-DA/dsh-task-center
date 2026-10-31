@@ -38,6 +38,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm gate
+      - name: Verify real timer and nonresponsive Host boundaries
+        run: pnpm verify:timeout --minutes=0.02
       - run: pnpm check:package
       - name: Check prebuilt files match source
         run: git diff --exit-code -- lib
