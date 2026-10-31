@@ -1,0 +1,33 @@
+name: Bug report / 问题反馈
+description: Report a reproducible problem / 反馈可复现的问题
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "Please redact keys, cookies and personal data. Security issues: use the Security tab's private report. / 请移除密钥、Cookie 与个人数据；漏洞请私下报告。"
+  - type: input
+    id: versions
+    attributes:
+      label: Versions / 版本
+      description: Task Center, DSH, operating system, and installation method
+      placeholder: 0.1.0-beta.1 / DSH 0.2.1-rc.5 / macOS / release tgz
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce / 复现步骤
+      description: Include a minimal example schedule, time zone and session mode.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual result / 预期与实际结果
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Sanitized logs or screenshots / 脱敏日志或截图
+      description: Do not upload state.json, complete sessions, credentials or personal documents.

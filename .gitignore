@@ -1,0 +1,11 @@
+node_modules/
+*.tsbuildinfo
+*.tgz
+tests/out/
+.local/
+.DS_Store
+.env
+.env.*
+!.env.example
+coverage/
+PR_BODY.md

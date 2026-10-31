@@ -1,0 +1,6 @@
+# Cordis bundle patch: this file is what makes the package a *bundle*.
+# The row name must equal the package name; the client module loader resolves
+# the browser half with `require.resolve('<row name>/package.json')`.
+- insert:
+    - id: dsh-task-center
+      name: '@dsh-external/dsh-task-center'
