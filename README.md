@@ -9,7 +9,7 @@
 
 [English](README.en.md) · [安装与使用](docs/USAGE.md) · [兼容性与限制](docs/COMPATIBILITY.md) · [发布检查](docs/RELEASE-READINESS.md) · [Release 下载](https://github.com/pallwalt/dsh-task-center/releases)
 
-这是独立的社区插件，适配 **DeepSeek Harness 0.2.1-rc.5**。首个公开版本为 **0.1.0-beta.1**，欢迎试用和反馈；目前的界面语言是简体中文。
+这是独立的社区插件，适配 **DeepSeek Harness 0.2.1-rc.5**。当前版本为 **0.1.0-beta.2**，欢迎试用和反馈；目前的界面语言是简体中文。
 
 ![安装后的自动化任务页面](docs/screenshots/task-list.png)
 
@@ -33,12 +33,12 @@
 
 需要已经初始化的 DSH Desktop **0.2.1-rc.5**，以及该版本配套的 `dsh` 终端命令。先启动 Desktop 一次完成初始化，安装前**完全退出应用**。终端命令的设置见 [DSH 官方 Desktop 文档](https://github.com/deepseek-ai/deepseek-harness/blob/master/apps/desktop/README.md#terminal-command)。
 
-从 [Releases](https://github.com/pallwalt/dsh-task-center/releases) 下载 `dsh-external-dsh-task-center-0.1.0-beta.1.tgz`，在下载目录执行：
+从 [Releases](https://github.com/pallwalt/dsh-task-center/releases) 下载 `dsh-external-dsh-task-center-0.1.0-beta.2.tgz`，在下载目录执行：
 
 ```sh
 dsh --version
 # 预期：0.2.1-rc.5
-dsh plugin --profile desktop add ./dsh-external-dsh-task-center-0.1.0-beta.1.tgz
+dsh plugin --profile desktop add ./dsh-external-dsh-task-center-0.1.0-beta.2.tgz
 ```
 
 重新打开 Desktop，进入左侧原有的“自动化任务”。Release 附带 `SHA256SUMS.txt`，可用于核对下载文件。
@@ -46,7 +46,7 @@ dsh plugin --profile desktop add ./dsh-external-dsh-task-center-0.1.0-beta.1.tgz
 也可以安装固定的 GitHub 标签（仓库已包含 `lib/`，无需安装时编译）：
 
 ```sh
-dsh plugin --profile desktop add 'github:pallwalt/dsh-task-center#v0.1.0-beta.1'
+dsh plugin --profile desktop add 'github:pallwalt/dsh-task-center#v0.1.0-beta.2'
 ```
 
 安装与升级会经过 DSH 自身的版本检查。其他 DSH 版本目前不在支持范围；不要通过修改版本约束来绕过检查。更多方式、故障排查、升级和卸载见 [使用指南](docs/USAGE.md)。本项目目前通过 GitHub 分发，尚未发布到 npm。
@@ -79,7 +79,7 @@ dsh plugin --profile desktop add 'github:pallwalt/dsh-task-center#v0.1.0-beta.1'
 - **DSH 运行时才调度**。退出或休眠期间无法准点执行，恢复后按补跑策略处理。
 - 模型和权限作用于任务会话；独立目录有助于整理文件，实际访问能力由 DSH 的权限机制决定。
 - 取消和超时会记录结果并请求宿主停止，外部 provider 或已启动的命令可能仍需人工检查。
-- 曾有一次真实环境的 20 分钟超时未按预期收尾，根因尚未确认；当前包含准备阶段超时等回归检查，但没有重新完成长期真实模型验收。
+- 超时会在准备返回、会话事件及调度恢复时再次核对截止时间。旧文档所指的运行实际在截止前被重载中断或手动取消，已更正；调查、修复与验证范围见 [超时调查](docs/TIMEOUT-INVESTIGATION.md)。
 - 文件产物由目录扫描推断，不等于模型输出质量已获验证。扫描有深度和数量上限。
 - 首版的实际安装截图来自 macOS；其他系统的真实 DSH 安装体验仍需反馈。详见 [完整限制](docs/COMPATIBILITY.md)。
 
@@ -95,6 +95,8 @@ pnpm install --frozen-lockfile
 pnpm gate
 pnpm check:package
 ```
+
+完整实际计时验证可运行 `pnpm verify:timeout --minutes=20`，需等待约 20 分钟，使用真实执行引擎与受控宿主接口，不调用付费模型。它覆盖准备不返回、模型请求不返回和取消不返回；不能替代真实 provider 的长期验收。
 
 `gate` 包含严格类型检查、引擎/API 回归、构建与客户端加载/组件冒烟检查；本地检查使用模拟宿主，不会运行真实模型。`check:package` 会检查最终安装包的文件清单并从解包后的产物加载宿主入口。CI 在 Linux（Node 22/24）和 macOS（Node 22）执行这些检查，另查预构建文件是否与源码一致及依赖漏洞。
 

@@ -1066,6 +1066,8 @@ function RunDetail(props: {
         <Field label="开始时间">{shortTime(run.startedAt, props.zone)}</Field>
         <Field label="结束时间">{shortTime(run.endedAt, props.zone)}</Field>
         <Field label="耗时">{formatDuration(run.durationMs)}</Field>
+        <Field label="超时设置">{run.timeoutMinutes === undefined ? (run.startedAt === null ? '—（尚未开始）' : '—（旧记录未保存）') : `${run.timeoutMinutes} 分钟`}</Field>
+        <Field label="截止时间">{shortTime(run.timeoutAt ?? null, props.zone)}</Field>
         <Field label="会话模式">{run.sessionMode === 'persistent' ? '持续会话' : '独立会话'}</Field>
         <Field label="实际模型">
           {run.modelSnapshot === null

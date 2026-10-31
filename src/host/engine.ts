@@ -83,6 +83,7 @@ interface ActiveRun {
   turnId: string | null
   workspace: string
   startedMs: number
+  deadlineMs: number
   timeout: ReturnType<typeof setTimeout> | null
   cancelTimeout: ReturnType<typeof setTimeout> | null
   /**
@@ -789,7 +790,18 @@ export class TaskEngine {
 
   /** Evaluate every enabled task once; safe to call from a timer or a test. */
   async tick(nowMs?: number): Promise<void> {
+    if (this.disposed) return
+    const generation = this.generation
     const now = nowMs ?? this.now()
+    // A delayed native timer is not the only observer of the deadline. On
+    // resume, check real runtime time before processing more scheduled work;
+    // the optional schedule-probe time must never expire a live Agent run.
+    for (const active of [...this.active.values()]) {
+      if (this.now() >= active.deadlineMs) {
+        await this.onTimeout(active, active.runId)
+        if (this.disposed || generation !== this.generation) return
+      }
+    }
     let changed = false
     changed = this.processDueRetries(now) || changed
     for (const task of this.store.tasks) {
@@ -1046,6 +1058,8 @@ export class TaskEngine {
       return
     }
     run.workspace = workspace
+    const startedMs = this.now()
+    const timeoutMs = Math.max(20, Math.round(Math.max(0.02, task.timeoutMinutes) * 60_000))
     const active: ActiveRun = {
       runId: run.id,
       taskId: task.id,
@@ -1054,7 +1068,8 @@ export class TaskEngine {
       sessionMode: task.sessionMode,
       turnId: null,
       workspace,
-      startedMs: this.now(),
+      startedMs,
+      deadlineMs: startedMs + timeoutMs,
       timeout: null,
       cancelTimeout: null,
       cancelReason: null,
@@ -1064,15 +1079,17 @@ export class TaskEngine {
     this.active.set(run.id, active)
     this.activeByTask.set(task.id, run.id)
     run.status = 'running'
-    run.startedAt = new Date(this.now()).toISOString()
+    run.startedAt = new Date(startedMs).toISOString()
+    run.timeoutMinutes = task.timeoutMinutes
+    run.timeoutAt = new Date(active.deadlineMs).toISOString()
     run.log.push({ at: run.startedAt, level: 'info', text: `开始执行（工作文件夹 ${workspace}）` })
+    run.log.push({ at: run.startedAt, level: 'info', text: `运行时限 ${task.timeoutMinutes} 分钟；截止 ${run.timeoutAt}` })
     this.persist()
     this.notify()
 
     // Arm the deadline before any preparation. Creating or resuming a Session,
     // pinning a model and pushing permission events are Host calls that can hang
     // exactly like a turn can, so they belong inside the timeout too.
-    const timeoutMs = Math.max(20, Math.round(Math.max(0.02, task.timeoutMinutes) * 60_000))
     active.timeout = setTimeout(() => {
       active.timeout = null
       void this.onTimeout(active, run.id)
@@ -1080,15 +1097,15 @@ export class TaskEngine {
     ;(active.timeout as unknown as { unref?: () => void }).unref?.()
 
     try {
-      const sessionId = await this.ensureSession(task, workspace)
-      if (!this.isCurrent(active)) return
+      const sessionId = await this.ensureSession(task, workspace, active)
+      if (!this.canContinue(active)) return
       active.sessionId = sessionId
       run.sessionId = sessionId
       run.log.push({ at: new Date(this.now()).toISOString(), level: 'info', text: `会话 ${sessionId}（${task.sessionMode === 'persistent' ? '持续会话' : '独立会话'}）` })
       await this.applyModel(task, sessionId, run)
-      if (!this.isCurrent(active)) return
+      if (!this.canContinue(active)) return
       await this.applyPermission(task, sessionId, run)
-      if (!this.isCurrent(active)) return
+      if (!this.canContinue(active)) return
       this.bySession.set(sessionId, run.id)
       this.persist()
       this.notify()
@@ -1105,7 +1122,7 @@ export class TaskEngine {
         controller.signal,
       )
     } catch (error) {
-      if (!this.isCurrent(active)) return
+      if (!this.canContinue(active)) return
       await this.finish(active, 'failed', { message: (error as Error).message, code: 'prompt_failed' })
     }
   }
@@ -1115,8 +1132,13 @@ export class TaskEngine {
    * active, and from the current generation. Every await is followed by this
    * check so a stopped, timed-out or reloaded run cannot keep going.
    */
-  private isCurrent(active: ActiveRun): boolean {
-    return !this.disposed && active.generation === this.generation && this.active.get(active.runId) === active
+  private canContinue(active: ActiveRun): boolean {
+    if (this.disposed || active.generation !== this.generation || this.active.get(active.runId) !== active) return false
+    if (this.now() >= active.deadlineMs) {
+      void this.onTimeout(active, active.runId)
+      return false
+    }
+    return true
   }
 
   /**
@@ -1205,12 +1227,13 @@ export class TaskEngine {
     return dir
   }
 
-  private async ensureSession(task: Task, workspace: string): Promise<string> {
+  private async ensureSession(task: Task, workspace: string, active: ActiveRun): Promise<string> {
     const controller = this.ctx.sessionController
     if (task.sessionMode === 'persistent' && task.sessionId !== null) {
       let reusable = false
       try {
         const agent = await this.resolveLiveAgent(task.sessionId)
+        if (!this.canContinue(active)) throw new Error('本次运行已结束，忽略迟到的会话准备结果')
         const cwd = agent?.session?.header?.cwd
         if (typeof cwd === 'string' && cwd.length > 0 && resolve(cwd) !== resolve(workspace)) {
           this.log('warn', `持续会话的工作文件夹是 ${cwd}，与任务要求的 ${workspace} 不同，改用新会话`)
@@ -1222,7 +1245,8 @@ export class TaskEngine {
         } else {
           reusable = true
         }
-      } catch {
+      } catch (error) {
+        if (!this.canContinue(active)) throw error
         this.log('warn', `持续会话 ${task.sessionId} 已不可用，改为新建`)
       }
       if (!reusable) {
@@ -1233,6 +1257,7 @@ export class TaskEngine {
       }
     }
     const created = await controller.create({ cwd: workspace })
+    if (!this.canContinue(active)) throw new Error('本次运行已结束，忽略迟到的会话准备结果')
     const sessionId = created?.sessionId ?? created?.id
     if (typeof sessionId !== 'string' || sessionId.length === 0) {
       throw new Error('宿主未返回会话 id')
@@ -1439,7 +1464,7 @@ export class TaskEngine {
     const runId = this.bySession.get(sessionId)
     if (runId === undefined) return
     const active = this.active.get(runId)
-    if (active === undefined) return
+    if (active === undefined || !this.canContinue(active)) return
     const type = event?.type
     const data = event?.data ?? {}
 
@@ -1560,6 +1585,12 @@ export class TaskEngine {
       })
     }
     if (task !== undefined) {
+      // Cancellation is best effort. A delayed end event from an aborted turn
+      // must not be attributed to a queued run reusing the same session.
+      if ((status === 'timeout' || status === 'cancelled') && task.sessionId === active.sessionId) {
+        task.sessionId = null
+        task.sessionModelKey = null
+      }
       task.lastRunAt = nowIso
       task.lastRunStatus = status
       task.lastError =

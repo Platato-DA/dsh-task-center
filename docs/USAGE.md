@@ -2,19 +2,19 @@
 
 ## 版本与安装
 
-支持范围为 DSH **0.2.1-rc.5**，插件 **0.1.0-beta.1**。首次使用 Desktop
+支持范围为 DSH **0.2.1-rc.5**，插件 **0.1.0-beta.2**。首次使用 Desktop
 应先启动一次完成初始化，再完全退出。安装前保留自己的 DSH 配置与任务数据备份。
 
 推荐下载 GitHub Release 的 `.tgz`，在下载目录执行：
 
 ```sh
-dsh plugin --profile desktop add ./dsh-external-dsh-task-center-0.1.0-beta.1.tgz
+dsh plugin --profile desktop add ./dsh-external-dsh-task-center-0.1.0-beta.2.tgz
 ```
 
 也可以安装带预构建产物的固定标签：
 
 ```sh
-dsh plugin --profile desktop add 'github:pallwalt/dsh-task-center#v0.1.0-beta.1'
+dsh plugin --profile desktop add 'github:pallwalt/dsh-task-center#v0.1.0-beta.2'
 ```
 
 开发者可克隆后构建，再通过绝对路径安装本地目录：
@@ -78,6 +78,8 @@ dsh plugin --profile desktop remove @dsh-external/dsh-task-center
 | `<工作目录>` | 实际产物 |
 
 运行记录展示真实 `turn/end` 状态，但不会评价内容质量。产物按运行开始后的文件修改时间扫描，深度默认 3，最多 500 个文件，忽略点目录、符号链接及常见构建目录。其他程序同期改动的文件也可能被收录。
+
+beta.2 起，运行详情保存并显示本次实际的超时设置和截止时间。期限在开始执行时固定，包含准备会话、模型和权限所花的时间；编辑任务不会追溯改变已经开始的运行。期限之后才到达的完成事件按超时处理，避免定时器晚回调时误记成功。持续会话在超时或取消后会改用新会话，隔离旧运行迟到的事件。旧历史没有这两个新字段时会显示“旧记录未保存”。
 
 状态文件损坏时会保留 `.corrupt-*` 文件；记录部分不合法时先保留 `.invalid-*.bak` 备份，再加载可识别记录。旧格式迁移另写 `.pre-workspace-*.bak`。备份包含私人提示词与路径，请不要上传到 issue。
 

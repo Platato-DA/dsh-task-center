@@ -27,6 +27,11 @@ and a client component/loader smoke test. The smoke test uses a React stand-in;
 it does not replace a real DSH UI acceptance test. No model or DSH server is
 started by these checks.
 
+An optional elapsed-time check is available as `pnpm verify:timeout --minutes=20`.
+It uses the actual engine with controlled host seams, takes about 20 minutes,
+and makes no real provider calls. CI runs a short version to keep this verifier
+executable; it does not pretend the short run is long-duration acceptance.
+
 ## Pull requests
 
 1. Keep changes focused and explain the user-visible result.

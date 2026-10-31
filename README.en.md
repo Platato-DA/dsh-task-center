@@ -8,7 +8,7 @@
 [中文](README.md) · [Releases](https://github.com/pallwalt/dsh-task-center/releases) · [Usage](docs/USAGE.md) · [Compatibility](docs/COMPATIBILITY.md)
 
 An independent community plugin for **DeepSeek Harness 0.2.1-rc.5**. Version
-**0.1.0-beta.1** is the first public beta. The UI currently uses Simplified Chinese.
+**0.1.0-beta.2** is the current public beta. The UI currently uses Simplified Chinese.
 
 ![Task Center installed in DSH](docs/screenshots/task-list.png)
 
@@ -36,14 +36,14 @@ command. Launch Desktop once to initialize it, then **fully quit the app** befor
 installing. See the [official Desktop command guide](https://github.com/deepseek-ai/deepseek-harness/blob/master/apps/desktop/README.md#terminal-command)
 if `dsh` is unavailable in your terminal.
 
-Download `dsh-external-dsh-task-center-0.1.0-beta.1.tgz` from
+Download `dsh-external-dsh-task-center-0.1.0-beta.2.tgz` from
 [Releases](https://github.com/pallwalt/dsh-task-center/releases), then run from its
 download directory:
 
 ```sh
 dsh --version
 # Expected: 0.2.1-rc.5
-dsh plugin --profile desktop add ./dsh-external-dsh-task-center-0.1.0-beta.1.tgz
+dsh plugin --profile desktop add ./dsh-external-dsh-task-center-0.1.0-beta.2.tgz
 ```
 
 Reopen Desktop and select the existing Automation page. `SHA256SUMS.txt` is
@@ -51,7 +51,7 @@ provided with the release. A pinned GitHub install is also available; `lib/` is
 committed, so installation does not need a build script:
 
 ```sh
-dsh plugin --profile desktop add 'github:pallwalt/dsh-task-center#v0.1.0-beta.1'
+dsh plugin --profile desktop add 'github:pallwalt/dsh-task-center#v0.1.0-beta.2'
 ```
 
 Other DSH versions have not been accepted. Do not bypass the host compatibility
@@ -82,9 +82,10 @@ DSH's native `schedule_create` creates a conversation reminder.
 - A working directory is organizational; enforcement belongs to DSH permissions.
 - Cancellation is best effort. Providers and detached commands may continue
   after the run record is finalized.
-- One previously observed 20-minute real-host timeout did not finalize as
-  expected; its root cause is unconfirmed. Current regressions cover timeout
-  handling, but prolonged live-model acceptance has not been repeated.
+- The deadline is checked after preparation, on session events and on scheduler
+  recovery. The beta.1 warning cited runs that were actually interrupted or
+  manually cancelled before their deadlines. See the corrected
+  [timeout investigation](docs/TIMEOUT-INVESTIGATION.md) and its verification scope.
 - Artifact discovery is bounded and based on file modification time. A successful
   turn does not guarantee a correct or complete output.
 - Actual installation screenshots are from macOS. See
@@ -102,6 +103,11 @@ pnpm install --frozen-lockfile
 pnpm gate
 pnpm check:package
 ```
+
+Run `pnpm verify:timeout --minutes=20` for an opt-in real 20-minute check of the
+actual engine with instrumented, nonresponsive host seams and no real provider
+calls. It covers hanging preparation, prompt and cancellation; it does not
+replace prolonged live-provider acceptance.
 
 `gate` runs type checking, engine/API regressions, the production build and a
 client loader/component smoke test. It uses mocked host services and no model

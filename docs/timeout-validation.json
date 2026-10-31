@@ -1,0 +1,46 @@
+{
+  "ok": true,
+  "error": null,
+  "startedAt": "2026-10-31T16:56:18.248Z",
+  "endedAt": "2026-10-31T17:16:18.646Z",
+  "elapsedMs": 1200385.943833,
+  "minutes": 20,
+  "node": "v22.23.1",
+  "engineSourceSha256": "d65d4c56f9cb845569b60b2f72a95dc71eb250c7130f5a59d2fa8a998b1bcda0",
+  "environment": "Actual TaskEngine with instrumented Host seams; no real DSH or model provider",
+  "requests": {
+    "sessions": 2,
+    "prompts": 1,
+    "cancels": 1,
+    "network": 0
+  },
+  "runs": [
+    {
+      "taskName": "preparation-hang",
+      "status": "timeout",
+      "startedAt": "2026-10-31T16:56:18.320Z",
+      "endedAt": "2026-10-31T17:16:18.618Z",
+      "durationMs": 1200298,
+      "timeoutMinutes": 20,
+      "timeoutAt": "2026-10-31T17:16:18.320Z",
+      "error": {
+        "message": "运行超过时限，已取消",
+        "code": "timeout"
+      }
+    },
+    {
+      "taskName": "provider-hang",
+      "status": "timeout",
+      "startedAt": "2026-10-31T16:56:18.313Z",
+      "endedAt": "2026-10-31T17:16:18.584Z",
+      "durationMs": 1200271,
+      "timeoutMinutes": 20,
+      "timeoutAt": "2026-10-31T17:16:18.313Z",
+      "error": {
+        "message": "运行超过时限，已取消",
+        "code": "timeout"
+      }
+    }
+  ],
+  "listenersAfterDispose": 0
+}

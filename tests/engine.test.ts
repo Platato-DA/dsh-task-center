@@ -1565,5 +1565,190 @@ for (const mode of ['sync', 'async'] as const) {
   h.cleanup()
 }
 
+console.log('\n长任务截止时间：回调延迟不能让逾期结果变成成功')
+{
+  const h = makeHarness()
+  await h.engine.start()
+  h.host.behaviour = 'hang'
+  h.engine.saveTask(baseTask({ id: 'late-result', timeoutMinutes: 20, enabled: false }))
+  const result = h.engine.runNow('late-result')
+  const id = result.ok ? result.value.id : ''
+  await waitFor(() => h.host.promptCount === 1)
+  const session = h.host.sessions.get(String(h.engine.findRun(id)?.sessionId)) as FakeSession
+  h.clock.now += 20 * 60_000 + 1
+  h.host.emit('session/event', session, { type: 'turn/end', data: { turn: 1, reason: { kind: 'completed' } } })
+  eq('超过截止时间的完成事件按 timeout 收尾', h.engine.findRun(id)?.status, 'timeout')
+  h.cleanup()
+}
+{
+  const h = makeHarness()
+  await h.engine.start()
+  h.host.behaviour = 'hang'
+  h.engine.saveTask(baseTask({ id: 'watchdog', timeoutMinutes: 20, enabled: false }))
+  const result = h.engine.runNow('watchdog')
+  const id = result.ok ? result.value.id : ''
+  await waitFor(() => h.host.promptCount === 1)
+  h.clock.now += 20 * 60_000 + 1
+  await h.engine.tick()
+  eq('调度恢复时收尾已逾期运行，不只等待原定时器', h.engine.findRun(id)?.status, 'timeout')
+  h.cleanup()
+}
+{
+  const h = makeHarness()
+  await h.engine.start()
+  const originalCreate = h.host.sessionController.create
+  let resume: (() => void) | undefined
+  h.host.sessionController.create = async (request) => {
+    await new Promise<void>((resolve) => { resume = resolve })
+    return originalCreate(request)
+  }
+  h.engine.saveTask(baseTask({ id: 'late-session', timeoutMinutes: 20, enabled: false }))
+  const result = h.engine.runNow('late-session')
+  const id = result.ok ? result.value.id : ''
+  await waitFor(() => resume !== undefined)
+  h.clock.now += 20 * 60_000 + 1
+  resume?.()
+  await sleep(30)
+  eq('准备返回时已逾期则收尾为 timeout', h.engine.findRun(id)?.status, 'timeout')
+  eq('逾期准备不会再调用模型', h.host.promptCount, 0)
+  h.cleanup()
+}
+
+console.log('\n超时后的持续会话：迟到的取消事件不能影响下一次运行')
+{
+  const h = makeHarness()
+  await h.engine.start()
+  h.host.behaviour = 'hang'
+  h.host.sessionController.cancel = async () => { h.host.cancels += 1; return {} }
+  h.engine.saveTask(baseTask({ id: 'late-cancel-event', timeoutMinutes: 20, sessionMode: 'persistent', enabled: false }))
+  const first = h.engine.runNow('late-cancel-event')
+  const firstId = first.ok ? first.value.id : ''
+  await waitFor(() => h.host.promptCount === 1)
+  const oldSession = h.host.sessions.get(String(h.engine.findRun(firstId)?.sessionId)) as FakeSession
+  const second = h.engine.runNow('late-cancel-event')
+  const secondId = second.ok ? second.value.id : ''
+  h.clock.now += 20 * 60_000 + 1
+  await h.engine.tick()
+  await waitFor(() => h.host.promptCount === 2)
+  check('超时后新的持续运行使用新会话', h.engine.findRun(secondId)?.sessionId !== oldSession.id)
+  h.host.emit('session/event', oldSession, { type: 'turn/end', data: { turn: 1, reason: { kind: 'aborted' } } })
+  eq('上次运行迟到的取消不影响新运行', h.engine.findRun(secondId)?.status, 'running')
+  h.cleanup()
+}
+
+console.log('\n20 分钟期限的边界与证据')
+for (const [elapsed, expected] of [[989032, 'succeeded'], [1_199_999, 'succeeded'], [1_200_000, 'timeout']] as const) {
+  const h = makeHarness()
+  await h.engine.start()
+  h.host.behaviour = 'hang'
+  h.engine.saveTask(baseTask({ id: `boundary-${elapsed}`, timeoutMinutes: 20, enabled: false }))
+  const started = h.clock.now
+  const result = h.engine.runNow(`boundary-${elapsed}`)
+  const id = result.ok ? result.value.id : ''
+  await waitFor(() => h.host.promptCount === 1)
+  const session = h.host.sessions.get(String(h.engine.findRun(id)?.sessionId)) as FakeSession
+  h.clock.now += elapsed
+  h.host.emit('session/event', session, { type: 'turn/end', data: { turn: 1, reason: { kind: 'completed' } } })
+  const run = h.engine.findRun(id)
+  eq(`${elapsed}ms 时的实际完成状态`, run?.status, expected)
+  eq('保存实际生效的 20 分钟设置', run?.timeoutMinutes, 20)
+  eq('保存从开始执行起算的明确截止时间', run?.timeoutAt, new Date(started + 1_200_000).toISOString())
+  const restored = new TaskStore(h.store.file)
+  restored.load()
+  eq('截止时间随运行历史持久保存', restored.runs[0]?.timeoutAt, run?.timeoutAt)
+  h.cleanup()
+}
+{
+  const h = makeHarness()
+  await h.engine.start()
+  h.host.behaviour = 'hang'
+  h.engine.saveTask(baseTask({ id: 'fixed-deadline', timeoutMinutes: 20, enabled: false }))
+  const result = h.engine.runNow('fixed-deadline')
+  const id = result.ok ? result.value.id : ''
+  await waitFor(() => h.host.promptCount === 1)
+  await h.engine.tick(h.clock.now + 3_600_000)
+  eq('仅模拟调度时间不会让真实运行提前超时', h.engine.findRun(id)?.status, 'running')
+  const updated = h.engine.saveTask({ ...h.store.tasks[0], timeoutMinutes: 0.02 })
+  check('运行期间可编辑将来任务的超时设置', updated.ok)
+  h.clock.now += 60_000
+  const session = h.host.sessions.get(String(h.engine.findRun(id)?.sessionId)) as FakeSession
+  h.host.emit('session/event', session, { type: 'turn/end', data: { turn: 1, reason: { kind: 'completed' } } })
+  eq('编辑不会追溯缩短已经开始的运行', h.engine.findRun(id)?.status, 'succeeded')
+  eq('历史记录仍保存原来实际生效的设置', h.engine.findRun(id)?.timeoutMinutes, 20)
+  h.cleanup()
+}
+{
+  const h = makeHarness()
+  await h.engine.start()
+  h.host.behaviour = 'hang'
+  h.host.sessionController.cancel = () => new Promise(() => {})
+  h.engine.saveTask(baseTask({ id: 'cancel-hangs', timeoutMinutes: 20, enabled: false }))
+  const result = h.engine.runNow('cancel-hangs')
+  const id = result.ok ? result.value.id : ''
+  await waitFor(() => h.host.promptCount === 1)
+  h.clock.now += 1_200_000
+  let returned = false
+  void h.engine.tick().then(() => { returned = true })
+  await sleep(15)
+  check('取消永不返回也不会卡住调度', returned)
+  eq('取消永不返回仍记为 timeout', h.engine.findRun(id)?.status, 'timeout')
+  h.cleanup()
+}
+
+console.log('\n超时准备的迟到返回不能改写新运行的持续会话')
+{
+  const h = makeHarness()
+  await h.engine.start()
+  h.host.behaviour = 'hang'
+  const originalCreate = h.host.sessionController.create
+  let release: (() => void) | undefined
+  let calls = 0
+  h.host.sessionController.create = async (request) => {
+    const created = await originalCreate(request)
+    calls += 1
+    if (calls === 1) await new Promise<void>((resolve) => { release = resolve })
+    return created
+  }
+  h.engine.saveTask(baseTask({ id: 'late-persistent-create', sessionMode: 'persistent', timeoutMinutes: 20, enabled: false }))
+  const first = h.engine.runNow('late-persistent-create')
+  const firstId = first.ok ? first.value.id : ''
+  await waitFor(() => release !== undefined)
+  const second = h.engine.runNow('late-persistent-create')
+  const secondId = second.ok ? second.value.id : ''
+  h.clock.now += 1_200_001
+  await h.engine.tick()
+  await waitFor(() => h.host.promptCount === 1)
+  const currentSession = String(h.engine.findRun(secondId)?.sessionId)
+  release?.()
+  await sleep(20)
+  eq('迟到的旧 create 不覆盖新会话引用', h.store.tasks[0]?.sessionId, currentSession)
+  eq('超时准备没有调用模型', h.engine.findRun(firstId)?.status, 'timeout')
+  const live = h.host.sessions.get(currentSession) as FakeSession
+  h.host.emit('session/event', live, { type: 'turn/end', data: { turn: 1, reason: { kind: 'completed' } } })
+  const third = h.engine.runNow('late-persistent-create')
+  const thirdId = third.ok ? third.value.id : ''
+  await waitFor(() => h.host.promptCount === 2)
+  eq('后续运行保留新会话的连续上下文', h.engine.findRun(thirdId)?.sessionId, currentSession)
+  h.cleanup()
+}
+console.log('\n卸载不能被一个挂起的超时检查反向写入')
+{
+  const h = makeHarness()
+  await h.engine.start()
+  h.host.behaviour = 'hang'
+  h.engine.saveTask(baseTask({ id: 'watchdog-owner', timeoutMinutes: 20, enabled: false }))
+  h.engine.saveTask(baseTask({ id: 'due-after-owner', schedule: { kind: 'once', at: new Date(h.clock.now + 1_200_000).toISOString() } }))
+  h.engine.runNow('watchdog-owner')
+  await waitFor(() => h.host.promptCount === 1)
+  h.clock.now += 1_200_001
+  const pending = h.engine.tick()
+  h.engine.dispose()
+  const writes = h.store.stats.writes
+  await pending
+  eq('已卸载的检查不再产生新排队运行', h.store.runs.filter((run) => run.taskId === 'due-after-owner').length, 0)
+  eq('已卸载的检查不再写入存储', h.store.stats.writes, writes)
+  h.cleanup()
+}
+
 console.log(`\n结果：${passes} 通过，${failures} 失败`)
 if (failures > 0) process.exitCode = 1

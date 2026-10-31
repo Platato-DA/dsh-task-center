@@ -2,9 +2,9 @@
 
 ## Supported scope
 
-| Item | First public beta |
+| Item | Public beta |
 | --- | --- |
-| Plugin | `0.1.0-beta.1` |
+| Plugin | `0.1.0-beta.2` |
 | DeepSeek Harness | Exactly `0.2.1-rc.5` |
 | Actual installed screenshots | macOS Desktop, supplied by maintainer on 2026-10-31 |
 | Development | Node.js 22+, pnpm 9.15.9 |
@@ -22,11 +22,13 @@ not been completed for this release.
 1. **Process-bound scheduler.** DSH must be running. App shutdown, OS sleep,
    suspended event loops and machine downtime can delay execution. There is no
    external daemon or hard real-time guarantee.
-2. **Unresolved live timeout observation.** During earlier maintainer testing,
-   one 20-minute real-host run failed to finalize on time. Its root cause remains
-   unconfirmed. Current code arms timeout before preparation and finalizes before
-   awaiting cancellation, with local regression coverage. A fresh long-duration
-   live-model test has not been completed; do not use the beta for critical jobs.
+2. **Timeout verification scope.** The beta.1 warning was corrected after the
+   source records showed interruption/cancellation before the configured
+   20-minute deadline. Beta.2 enforces captured deadlines across preparation,
+   session events and scheduler recovery, and isolates cancelled persistent
+   sessions. See the [investigation and elapsed-time evidence](TIMEOUT-INVESTIGATION.md).
+   Timers cannot run while the process/event loop is suspended. No prolonged
+   live-model acceptance or hard real-time guarantee is claimed.
 3. **Best-effort stopping.** A timeout/cancelled record does not prove a provider
    or detached command has stopped. Retries and queued runs can produce repeated
    side effects; task authors must design for idempotency.
@@ -70,5 +72,5 @@ not been completed for this release.
   maintainer's real task store.
 
 The project is suitable for an explicitly labeled public beta. Stable 1.0 should
-wait for independent installation feedback, resolved long-run timeout behavior,
-and a wider real-host compatibility and reliability assessment.
+wait for independent installation feedback and a wider real-host compatibility
+and reliability assessment, including prolonged live-provider acceptance.

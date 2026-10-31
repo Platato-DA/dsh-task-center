@@ -1,5 +1,12 @@
 # First public beta assessment — 2026-10-31
 
+**Follow-up in beta.2:** the historical 20-minute warning below has been
+corrected. The cited records ended before 20 minutes; separately reproduced
+deadline and persistent-session event defects are fixed and covered by new
+regressions. See [TIMEOUT-INVESTIGATION.md](TIMEOUT-INVESTIGATION.md) for the
+correction, evidence and scope. The original beta.1 assessment below is retained
+as a record of what was reported at that release.
+
 **Decision: suitable for a public beta; stable 1.0 is not yet justified.**
 
 The project has an implemented execution engine, native UI integration,

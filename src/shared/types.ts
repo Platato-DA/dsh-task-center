@@ -196,6 +196,10 @@ export interface Run {
   startedAt: string | null
   endedAt: string | null
   durationMs: number | null
+  /** Runtime limit captured when execution starts; absent on legacy records. */
+  timeoutMinutes?: number
+  /** Absolute execution deadline; absent on legacy records or queued runs. */
+  timeoutAt?: string
   sessionId: string | null
   sessionMode: SessionMode
   /**
